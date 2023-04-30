@@ -1,21 +1,30 @@
 import React, { useState } from "react";
 import { useHistory } from "react-router";
 import "../css/LoginModal.css";
+// import GoogleLogin from 'react-google-login';
 
-function LoginModal() {
+function LoginModal(props) {
   let [joinLoign, setJoinLogin] = useState("로그인");
   const history = useHistory();
 
+  let [username, setUsername] = useState()
+  let [userpassword, setUserPassword] = useState()
+
+  const data = {username : username, password : userpassword}
+
+  
+  const handleNameChange = (e) => {
+    setUsername(e.target.value)
+  }
+  const handlePasswordChange = (e) => {
+    setUserPassword(e.target.value)
+  }
   return (
     <>
       <div className="login-container">
         <div className="login-box">
           <div className="exit">
-            <button
-              onClick={() => {
-                history.goBack();
-              }}
-            >
+            <button onClick={() => { history.goBack() }}>
               <svg
                 stroke="currentColor"
                 fill="currentColor"
@@ -30,13 +39,36 @@ function LoginModal() {
           </div>
           <span>{joinLoign}</span>
           <form>
-            {joinLoign === "로그인" ? (
+            {joinLoign === "로그인"
+            ? (
               <>
-                <input type="text" placeholder="아이디를 입력하세요" />
-                <input type="password" placeholder="비밀번호를 입력하세요" />
-                <button className="JoinLoign-button">{joinLoign}</button>
+              <input type="text" placeholder="아이디를 입력하세요" onChange={handleNameChange}/>
+                <input type="password" placeholder="비밀번호를 입력하세요" id="password" onChange={handlePasswordChange}/>
+                <button className="JoinLoign-button" onClick={(e) => {
+                e.preventDefault()
+                  fetch('http://localhost:8000/login/', {
+                  method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                  })
+                  .then(res => res.json())
+                  .then(json => {
+                    // user data와 token정보가 일치하면 로그인 성공
+                    if (json.user && json.user.username && json.token) {
+                      props.userHasAuthenticated(true, json.user.username, json.token);
+                      history.push("/");
+                      props.setModal(true)
+                    }else{
+                      alert("아이디 또는 비밀번호를 확인해주세요.")
+                    }
+                  })
+                  .catch(error => alert(error));
+                }}>{joinLoign}</button>
               </>
-            ) : (
+            ) 
+            :(
               <>
                 <input type="text" placeholder="아이디를 입력하세요" />
                 <input type="password" placeholder="비밀번호를 입력하세요" />
